@@ -38,8 +38,8 @@ def objective(lambdas, N, R, sigma, f_def):
 # --- Input data ---
 
 nbins = 8
-f_def = np.ones(nbins)
 f_true = np.array([10, 30, 50, 80, 60, 40, 20, 10])  # true spectrum
+f_def = np.ones(nbins)
 R = np.array([
     [0.6, 0.9, 1.0, 0.5, 0.3, 0.1, 0.05, 0.02],
     [0.2, 0.4, 0.9, 1.0, 0.8, 0.5, 0.2, 0.1],
@@ -100,33 +100,51 @@ print("Chi^2:", chi_squared(f_unfolded_sa, N, R, sigma))
 
 # --- Plot setup ---
 
-# Normalize all spectra
-f_true_norm = f_true / np.sum(f_true)
-f_slsqp_norm = f_unfolded_slsqp / np.sum(f_unfolded_slsqp)
-f_sa_norm = f_unfolded_sa / np.sum(f_unfolded_sa)
+plot = False
+if plot == True:
+    # Normalize all spectra
+    f_true_norm = f_true / np.sum(f_true)
+    f_slsqp_norm = f_unfolded_slsqp / np.sum(f_unfolded_slsqp)
+    f_sa_norm = f_unfolded_sa / np.sum(f_unfolded_sa)
 
-bins = np.arange(1, nbins + 1)
+    bins = np.arange(1, nbins + 1)
 
-fig, axs = plt.subplots(3, 1, figsize=(10, 10), sharex=True)
+    fig, axs = plt.subplots(3, 1, figsize=(10, 10), sharex=True)
 
-# --- True Spectrum ---
-axs[0].plot(bins, f_true_norm, 'ko--', linewidth=2, markersize=6)
-axs[0].set_title('True Spectrum')
-axs[0].set_ylabel('Normalized Intensity')
-axs[0].grid(True, linestyle='--', alpha=0.5)
+    # --- True Spectrum ---
+    axs[0].plot(bins, f_true_norm, 'ko--', linewidth=2, markersize=6)
+    axs[0].set_title('True Spectrum')
+    axs[0].set_ylabel('Normalized Intensity')
+    axs[0].grid(True, linestyle='--', alpha=0.5)
 
-# --- SLSQP Result ---
-axs[1].plot(bins, f_slsqp_norm, 'b^-', linewidth=2, markersize=8)
-axs[1].set_title('Unfolded Spectrum (SLSQP)')
-axs[1].set_ylabel('Normalized Intensity')
-axs[1].grid(True, linestyle='--', alpha=0.5)
+    # --- SLSQP Result ---
+    axs[1].plot(bins, f_slsqp_norm, 'b^-', linewidth=2, markersize=8)
+    axs[1].set_title('Unfolded Spectrum (SLSQP)')
+    axs[1].set_ylabel('Normalized Intensity')
+    axs[1].grid(True, linestyle='--', alpha=0.5)
 
-# --- Simulated Annealing Result ---
-axs[2].plot(bins, f_sa_norm, 'rs-', linewidth=2, markersize=6)
-axs[2].set_title('Unfolded Spectrum (Simulated Annealing)')
-axs[2].set_xlabel('Energy Bin')
-axs[2].set_ylabel('Normalized Intensity')
-axs[2].grid(True, linestyle='--', alpha=0.5)
+    # --- Simulated Annealing Result ---
+    axs[2].plot(bins, f_sa_norm, 'rs-', linewidth=2, markersize=6)
+    axs[2].set_title('Unfolded Spectrum (Simulated Annealing)')
+    axs[2].set_xlabel('Energy Bin')
+    axs[2].set_ylabel('Normalized Intensity')
+    axs[2].grid(True, linestyle='--', alpha=0.5)
 
-plt.tight_layout()
-plt.show()
+    plt.tight_layout()
+    plt.show()
+
+
+""" --- Explicare program ---
+1. Maximizarea entropiei:
+   Functia entropy(f, f_def) calculeaza entropia spectrului f relativ la spectrul default f_def. Scopul metodei
+   MaxEnt este de a maximiza aceasta entropie in timp ce satisface constrangerile.
+2. Functia spectrum(R, f_def, lambdas) calculeaza spectrul f folosind matricea de raspuns R, spectrul default
+   f_def si multiplicatorii Lagrange lambdas. Acesta este miezul metodei MaxEnt. Functia aceasta are ca scop 
+   in loc sa gasim direct spectrul f, definim functia spectrum(R, f_def, lambdas) care transforma problema 
+   intr-una a gasirii celor mai buni lambdas, astfel incat spectrul rezultat sa fiteze datele (i.e. R*f ~ N) 
+   si sa aiba maximul de entropie.
+3. Constrangerile: 3.1) de normalizare: se asigura ca spectrul prezis este insumat la 1.
+                   3.2) de chi^2: valoarea lui chi^2 da aprox. 1.
+4. Metoda de optimizare SA este o metoda globala de optimizare si tine cont de constrangeri prin intermediul 
+   termenilor de penalty in functia objective() (se adauga penalty-uri mari daca chi^2!=1 sau sum(f)!=1)
+"""
